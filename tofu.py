@@ -405,7 +405,7 @@ class TerraformInventory(object):
 
 
 def cli_args():
-  parser = argparse.ArgumentParser(description='Terraform Dynamic Inventory')
+  parser = argparse.ArgumentParser(description='Terraform OpenStack Dynamic Inventory Script')
   parser.add_argument('--dump',    action = 'store_true',
       help='Dump the raw terraform JSON')
   parser.add_argument('--dir',     action = 'store',

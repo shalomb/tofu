@@ -1,21 +1,20 @@
 # tofu
 
-A terraform openstack dynamic inventory script that parses the JSON object
+A TerraForm OpenStack dynamic inventory script that parses the JSON object
 from `terraform state pull` to generate a YAML or JSON blurb that is suitable
 for an ansible dynamic inventory.
 
 This approach is slightly different to the official
-[openstack dynamic inventory script]
-(http://docs.ansible.com/ansible/2.5/user_guide/intro_dynamic_inventory.html#example-openstack-external-inventory-script)
-that queries the openstack APIs to compose the inventory. The advantage with
-`tofu` is it aims to use the terraform state to do the same but with
-no other dependency on the [Shade](https://pypi.python.org/pypi/shade)
-library.
+[OpenStack dynamic inventory script](http://docs.ansible.com/ansible/2.5/user_guide/intro_dynamic_inventory.html#example-openstack-external-inventory-script)
+that queries the OpenStack APIs to compose the inventory. The advantage with
+`tofu` is it aims to use the TerraForm state independently of the OpenStack state
+to do the same and with no other python library dependencies
+(e.g. [Shade](https://pypi.python.org/pypi/shade))
 
 ## Requirements
 
 * Python 2.x
-* Terraform
+* TerraForm
 
 ## Usage
 
@@ -23,7 +22,7 @@ library.
 $ tofu.py --help
 usage: tofu.py [-h] [--dump] [--dir DIR] [--example] [--groupby GROUPBY] [--hosts] [--file FILE] [--json] [--yaml]
 
-Terraform Dynamic Inventory
+Terraform OpenStack Dynamic Inventory Script
 
 optional arguments:
   -h, --help         show this help message and exit
@@ -38,8 +37,8 @@ optional arguments:
 ```
 
 The basic use-case is to have ansible execute `tofu` to return a YAML/JSON
-object to use as a [dynamic inventory]
-(http://docs.ansible.com/ansible/latest/user_guide/intro_dynamic_inventory.html)
+object to use as a
+[dynamic inventory](http://docs.ansible.com/ansible/latest/user_guide/intro_dynamic_inventory.html)
 
 ```
 chmod +x tofu.py
@@ -164,15 +163,15 @@ tofu.py --groupby name             # Useful? Creates groups of size 1
 > NOTE: You will need a wrapper script that becomes the executable that
 > ansible invokes to call `tofu` to do grouping this way.
 
-If you use [Server Groups]
-(https://www.terraform.io/docs/providers/openstack/r/compute_servergroup_v2.html)
+If you use
+[Server Groups](https://www.terraform.io/docs/providers/openstack/r/compute_servergroup_v2.html)
 in terraform to describe groups or affinity/anti-affinity policies then `tofu`
 will use the servergroup name as the grouping key. This is useful in that it is
 probably what you need and is a logical fit for `tofu` and so avoids the need
 for a wrapper script.
 
-Grouping can also be done in a [static fashion]
-(http://docs.ansible.com/ansible/latest/user_guide/intro_dynamic_inventory.html#static-groups-of-dynamic-groups)
+Grouping can also be done in a
+[static fashion](http://docs.ansible.com/ansible/latest/user_guide/intro_dynamic_inventory.html#static-groups-of-dynamic-groups)
 
 ### Generating /etc/hosts entries
 
