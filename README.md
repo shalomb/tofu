@@ -1,14 +1,27 @@
 # tofu
 
-A terraform openstack dynamic inventory script that parses the output
-of `terraform state pull` to generate a YAML or JSON blurb that can
-be read in by ansible to use as a dynamic inventory.
+A terraform openstack dynamic inventory script that parses the JSON object
+from `terraform state pull` to generate a YAML or JSON blurb that is suitable
+for an ansible dynamic inventory.
+
+This approach is slightly different to the official
+[openstack dynamic inventory script]
+(http://docs.ansible.com/ansible/2.5/user_guide/intro_dynamic_inventory.html#example-openstack-external-inventory-script)
+that queries the openstack APIs to compose the inventory. The advantage with
+`tofu` is it aims to use the terraform state to do the same but with
+no other dependency on the [Shade](https://pypi.python.org/pypi/shade)
+library.
+
+## Requirements
+
+* Python 2.x
+* Terraform
 
 ## Usage
 
 ```
-$ bin/tf-os-ansible-inventory.py --help
-usage: tf-os-ansible-inventory.py [-h] [--dump] [--dir DIR] [--example] [--groupby GROUPBY] [--hosts] [--file FILE] [--json] [--yaml]
+$ tofu.py --help
+usage: tofu.py [-h] [--dump] [--dir DIR] [--example] [--groupby GROUPBY] [--hosts] [--file FILE] [--json] [--yaml]
 
 Terraform Dynamic Inventory
 
@@ -24,7 +37,16 @@ optional arguments:
   --yaml             Output inventory as YAML (default, slower)
 ```
 
-The basic use-case is to have ansible execute `tofu`
+The basic use-case is to have ansible execute `tofu` to return a YAML/JSON
+object to use as a [dynamic inventory]
+(http://docs.ansible.com/ansible/latest/user_guide/intro_dynamic_inventory.html)
+
+```
+chmod +x tofu.py
+ansible -i tofu.py -u ubuntu AZ1-BER-NORTH -m ping
+```
+
+Or for a less in-your-face integration ..
 
 ```
 $ cat ansible.cfg
@@ -38,7 +60,6 @@ chmod +x bin/tofu.py
 
 terraform plan
 terraform apply
-terraform state pull | python -m json.tool # Just to know what the deal is
 ansible-playbook ./site.yml -l webserver-0[1:6]
 ```
 
@@ -46,13 +67,14 @@ ansible-playbook ./site.yml -l webserver-0[1:6]
 
 As is often the case, the above is no good as infrastructure is composed of
 logical groups of instances where you need to run different plays against
-different groups. For this scenario, you can use `--groupby` to collate
+different groups. To support this, you can use `--groupby` to collate
 terraform resource instances into groups grouped by some instance attribute
 that terraform holds in its state.
 
-e.g. consider a typical object representation of an instance (
-See `terraform state pull` for the complete picture) and assume that
-there are other instances sharing similar attributes
+e.g. consider the typical object representation of an instance in
+terraform's state (See `terraform state pull` for a complete JSON object)
+and assume there are other instances sharing similar attributes that can
+be used as the key to do the grouping.
 
 ```
 nginx-01:
@@ -140,11 +162,47 @@ tofu.py --groupby name             # Useful? Creates groups of size 1
 ```
 
 > NOTE: You will need a wrapper script that becomes the executable that
-> ansible invokes to call the above.
+> ansible invokes to call `tofu` to do grouping this way.
 
 If you use [Server Groups]
 (https://www.terraform.io/docs/providers/openstack/r/compute_servergroup_v2.html)
-to describe your server groups/affinity/anti-affinity policies then `tofu` will
-use the server groups to collate instances. This is useful in that it is
-probably what you need and it avoids the need for a wrapper script.
+in terraform to describe groups or affinity/anti-affinity policies then `tofu`
+will use the servergroup name as the grouping key. This is useful in that it is
+probably what you need and is a logical fit for `tofu` and so avoids the need
+for a wrapper script.
 
+Grouping can also be done in a [static fashion]
+(http://docs.ansible.com/ansible/latest/user_guide/intro_dynamic_inventory.html#static-groups-of-dynamic-groups)
+
+### Generating /etc/hosts entries
+
+    tofu.py --hosts
+
+### Working with multiple terraform projects/directories
+
+    tofu.py --dir terraform/AZ1-BER-NORTH/ > AZ1-BER_NORTH.json
+    tofu.py --dir terraform/AZ1-MUN-SOUTH/ > AZ1-MUN-SOUTH.json
+
+    /path/to/json-merge-tool AZ1-BER-NORTH.json AZ1-MUN-SOUTH.json
+
+Where `json-merge-tool` is some tool that merges the 2/many JSON files and
+returns that as the dynamic inventory to `ansible`.
+
+## Troubleshooting
+
+`tofu` runs `terraform state ...`, so you will need to ensure it is run in
+the same directory that `terraform` runs.
+
+    terraform state pull > tf-state.json # Ensure this file is populated first
+
+    tofu.py --file tf-state.json --json | python -m json.tool
+
+    tofu.py --file tf-state.json --dump
+
+## TODO
+
+* Implement caching and `--refresh` semantics to speed up the dev cycle.
+* Honour the `--list` argument, for the default use-case.
+* Honour the `--host` argument for the inventory of a single host.
+* Change `--hosts` to mean the plural of `--host`, consider a better
+  argument to replace `--hosts` as we have now.
