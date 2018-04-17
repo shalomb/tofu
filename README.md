@@ -29,12 +29,16 @@ optional arguments:
   --dump             Dump the raw terraform JSON
   --dir DIR          Dir to use for terraform state/config
   --example          Show an example JSON inventory
+  --accessip         Use the instance access IP address for the value of
+                     ansible_host
   --groupby GROUPBY  Instance attribute to group hosts by (default=name)
+  --list             Output entire inventory (default, implied)
   --hosts            Print entries for /etc/hosts
-  --list             Output the entire inventory (default, implied)
-  --file FILE        Path to file containing terraform state as JSON i.e. `terraform state pull`
+  --file FILE        Path to file containing terraform state as JSON i.e.
+                     `terraform state pull`
   --json             Output inventory as JSON (faster)
   --yaml             Output inventory as YAML (default, slower)
+
 ```
 
 The basic use-case is to have ansible execute `tofu` to return a YAML/JSON
@@ -188,6 +192,15 @@ Grouping can also be done in a
 Where `json-merge-tool` is some tool that merges the 2/many JSON files and
 returns that as the dynamic inventory to `ansible`.
 
+## Controlling the IP address used for ansible_host
+
+By default, `tofu` will use the value of the instances' first floating IP
+address in the inventory to allow direct ansible/SSH access into the instances.
+
+If this is not desired or if ansible is able to connect directly via ssh into
+the instances, the `--accessip` flag dictates that `tofu` use the instance
+private/access IP address instead.
+
 ## Troubleshooting
 
 `tofu` runs `terraform state ...`, so you will need to ensure it is run in
@@ -202,7 +215,8 @@ the same directory that `terraform` runs.
 ## TODO
 
 * Implement caching and `--refresh` semantics to speed up the dev cycle.
-* Honour the `--list` argument, for the default use-case.
+* Support using hostnames or FQDNs for the value of `ansible_host` in
+  the inventory where using IP addresses may not be desirable.
 * Honour the `--host` argument for the inventory of a single host.
 * Change `--hosts` to mean the plural of `--host`, consider a better
   argument to replace `--hosts` as we have now.
