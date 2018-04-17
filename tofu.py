@@ -323,7 +323,9 @@ class TerraformInventory(object):
           for y in attrs.keys():
             k = re.sub('value_specs.', '', y)
             group.vars[k] = group.vars[y] = attrs[y]
-          del group['vars']['%']
+
+          if '%' in group['vars']:
+            del group['vars']['%']
 
           group['vars']['nodes'] = [
             group.vars[x] for x in
