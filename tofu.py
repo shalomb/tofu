@@ -153,8 +153,8 @@ class TerraformInventory(object):
         self.resources[x].primary.attributes.instance_id == instance_id,
         self.get_resources(type='openstack_compute_floatingip_associate_v2')
     )]
-    return [ 
-      self.get_floating_ip(x.primary.attributes.floating_ip) 
+    return [
+      self.get_floating_ip(x.primary.attributes.floating_ip)
         for x in fips
     ]
 
@@ -179,8 +179,8 @@ class TerraformInventory(object):
         self.resources[x].primary.attributes.instance_id == instance_id,
         self.get_resources(type='openstack_compute_volume_attach_v2')
     )]
-    return [ 
-      self.get_volume(x.primary.attributes.volume_id) 
+    return [
+      self.get_volume(x.primary.attributes.volume_id)
         for x in volumes
     ]
 
