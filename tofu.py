@@ -226,7 +226,7 @@ class TerraformInventory(object):
 
       except Exception as e:
         warn('WARNING: Error collecting %s inventory (%s): %s' % (key, value, e))
-        sys.exit(3)
+        result[key] = {}
 
     return result
 
