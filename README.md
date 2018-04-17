@@ -31,6 +31,7 @@ optional arguments:
   --example          Show an example JSON inventory
   --groupby GROUPBY  Instance attribute to group hosts by (default=name)
   --hosts            Print entries for /etc/hosts
+  --list             Output the entire inventory (default, implied)
   --file FILE        Path to file containing terraform state as JSON i.e. `terraform state pull`
   --json             Output inventory as JSON (faster)
   --yaml             Output inventory as YAML (default, slower)
