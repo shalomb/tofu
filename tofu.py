@@ -122,8 +122,11 @@ class TerraformInventory(object):
       print("%s\t%s" % x)
 
 
-  def ansible_inventory(self, group_by):
-    self.inventory = self.terraform_inventory(group_by=group_by)
+  def ansible_inventory(self, group_by, use_access_ip):
+    self.inventory = self.terraform_inventory(
+                        group_by=group_by,
+                        use_access_ip=use_access_ip
+                   )
     return self.inventory
 
 
@@ -230,7 +233,7 @@ class TerraformInventory(object):
     return result
 
 
-  def terraform_inventory(self, group_by):
+  def terraform_inventory(self, group_by, use_access_ip=True):
     result = Dotable.parse({
       '_meta': {
         'hostvars': {}
@@ -257,9 +260,14 @@ class TerraformInventory(object):
 
       result['all']['hosts'].append(attributes.name)
 
-      hostrecord['ansible_host'] = attributes.access_ip_v4
       hostrecord['floating_ips'] = self.get_floating_ip_associations(
                                               instance_id=instance_id )
+
+      if use_access_ip == True:
+        hostrecord['ansible_host'] = attributes.access_ip_v4
+      else:
+        hostrecord['ansible_host'] = hostrecord['floating_ips'][0].address
+
       # TODO
       # Is this portable into IPv6?
       hostrecord['public_ipv4']  = hostrecord['floating_ips'][0]['address']
@@ -413,6 +421,8 @@ def cli_args():
       help='Dir to use for terraform state/config')
   parser.add_argument('--example', action = 'store_true',
       help='Show an example JSON inventory')
+  parser.add_argument('--accessip', action='store_true',
+      help='Use the instance access IP address for the value of ansible_host')
   parser.add_argument('--groupby', action='store',
       help='Instance attribute to group hosts by (default=name)')
   parser.add_argument('--list',   action = 'store_true',
@@ -457,13 +467,22 @@ if __name__ == "__main__":
 
   else:
     warn('Populating inventory ...')
+
+    use_access_ip = ( os.environ['TF_USE_ACCESS_IP'] if
+                'TF_USE_ACCESS_IP' in os.environ else
+                args.accessip )
+
     group_by = ( os.environ['TF_GROUPBY'] if
                 'TF_GROUPBY' in os.environ else
                 args.groupby )
+
     if args.json or 'TF_JSON' in os.environ:
       print(
         json.dumps(
-          Inventory.ansible_inventory(group_by=group_by),
+          Inventory.ansible_inventory(
+            group_by=group_by,
+            use_access_ip=use_access_ip
+          ),
           indent=2,
           sort_keys=True
         )
@@ -473,7 +492,10 @@ if __name__ == "__main__":
         yaml.dump(
           yaml.load(
             json.dumps(
-              Inventory.ansible_inventory(group_by=group_by),
+              Inventory.ansible_inventory(
+                group_by=group_by,
+                use_access_ip=use_access_ip
+              ),
               sort_keys=True
             )
           ),
