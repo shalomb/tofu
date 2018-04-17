@@ -3,7 +3,6 @@
 # TODO
 # As per http://docs.ansible.com/ansible/latest/dev_guide/developing_inventory.html
 # Support
-#   --list
 #   --host
 
 '''
@@ -226,7 +225,7 @@ class TerraformInventory(object):
 
       except Exception as e:
         warn('WARNING: Error collecting %s inventory (%s): %s' % (key, value, e))
-        sys.exit(3)
+        result[key] = {}
 
     return result
 
@@ -313,7 +312,7 @@ class TerraformInventory(object):
       })
 
       server_groups = self.get_resources('openstack_compute_servergroup_v2')
-      
+
       if not group_by and len(server_groups):
         for x in server_groups:
           name = str(self.resources[x].primary.attributes.name)
@@ -323,7 +322,9 @@ class TerraformInventory(object):
           for y in attrs.keys():
             k = re.sub('value_specs.', '', y)
             group.vars[k] = group.vars[y] = attrs[y]
-          del group['vars']['%']
+
+          if '%' in group['vars']:
+            del group['vars']['%']
 
           group['vars']['nodes'] = [
             group.vars[x] for x in
@@ -414,6 +415,8 @@ def cli_args():
       help='Show an example JSON inventory')
   parser.add_argument('--groupby', action='store',
       help='Instance attribute to group hosts by (default=name)')
+  parser.add_argument('--list',   action = 'store_true',
+      help='Output inventory')
   parser.add_argument('--hosts',   action = 'store_true',
       help='Print entries for /etc/hosts')
   parser.add_argument('--file',    action = 'store',
@@ -436,6 +439,9 @@ if __name__ == "__main__":
     os.environ['TF_STATE_JSON'] = args.file
 
   Inventory = TerraformInventory()
+
+  if args.list:
+    args.yaml = True
 
   if args.example:
     print_json( Inventory.example_inventory() )
