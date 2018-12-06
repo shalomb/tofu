@@ -265,12 +265,13 @@ class TerraformInventory(object):
 
       if use_access_ip == True:
         hostrecord['ansible_host'] = attributes.access_ip_v4
-      else:
+      elif hostrecord['floating_ips']:
         hostrecord['ansible_host'] = hostrecord['floating_ips'][0].address
 
       # TODO
       # Is this portable into IPv6?
-      hostrecord['public_ipv4']  = hostrecord['floating_ips'][0]['address']
+      if hostrecord['floating_ips']:
+        hostrecord['public_ipv4']  = hostrecord['floating_ips'][0]['address']
 
       hostrecord['volumes'] = self.get_volume_attachments(
                                               instance_id=instance_id )
