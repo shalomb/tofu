@@ -339,6 +339,7 @@ class TerraformInventory(object):
             filter( lambda x: re.search('members.\d+', x), group.vars )
           ]
           group.vars['scale'] = int(group.vars['members.#'])
+
           group['hosts'] = [
             self.get_instance(x).primary.attributes.name
               for x in group['vars']['nodes']
@@ -415,26 +416,37 @@ class TerraformInventory(object):
 
 def cli_args():
   parser = argparse.ArgumentParser(description='Terraform OpenStack Dynamic Inventory Script')
+
   parser.add_argument('--dump',    action = 'store_true',
       help='Dump the raw terraform JSON')
+
   parser.add_argument('--dir',     action = 'store',
       help='Dir to use for terraform state/config')
+
   parser.add_argument('--example', action = 'store_true',
       help='Show an example JSON inventory')
+
   parser.add_argument('--accessip', action='store_true',
       help='Use the instance access IP address for the value of ansible_host')
+
   parser.add_argument('--groupby', action='store',
       help='Instance attribute to group hosts by (default=name)')
+
   parser.add_argument('--list',   action = 'store_true',
       help='Output entire inventory (default, implied)')
+
   parser.add_argument('--hosts',   action = 'store_true',
       help='Print entries for /etc/hosts')
+
   parser.add_argument('--file',    action = 'store',
       help='Path to file containing terraform state as JSON i.e. `terraform state pull`')
+
   parser.add_argument('--json',    action = 'store_true',
       help='Output inventory as JSON (faster)')
+
   parser.add_argument('--yaml',    action = 'store_true',
       help='Output inventory as YAML (default, slower)')
+
   return parser.parse_args()
 
 
