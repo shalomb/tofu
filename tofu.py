@@ -450,8 +450,10 @@ def cli_args():
 
   parser.add_argument('--groupby', action='store',
       help='Instance attribute to group hosts by (default=name)')
+
   parser.add_argument('--groups', action='store', default='',
       help='Instance attribute with comma-separated list of groups (default=none)')
+
   parser.add_argument('--list',   action = 'store_true',
       help='Output entire inventory (default, implied)')
 
