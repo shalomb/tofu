@@ -263,7 +263,7 @@ class TerraformInventory(object):
       hostrecord['floating_ips'] = self.get_floating_ip_associations(
                                               instance_id=instance_id )
 
-      if use_access_ip == True:
+      if use_access_ip:
         hostrecord['ansible_host'] = attributes.access_ip_v4
       else:
         hostrecord['ansible_host'] = hostrecord['floating_ips'][0].address
