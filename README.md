@@ -32,6 +32,8 @@ optional arguments:
   --accessip         Use the instance access IP address for the value of
                      ansible_host
   --groupby GROUPBY  Instance attribute to group hosts by (default=name)
+  --groups GROUPS    Instance attribute with comma-separated list of groups
+                     (default=none)
   --list             Output entire inventory (default, implied)
   --hosts            Print entries for /etc/hosts
   --file FILE        Path to file containing terraform state as JSON i.e.
@@ -177,6 +179,10 @@ for a wrapper script.
 
 Grouping can also be done in a
 [static fashion](http://docs.ansible.com/ansible/latest/user_guide/intro_dynamic_inventory.html#static-groups-of-dynamic-groups)
+
+To do grouping similar to Ansible Openstack inventory plugin, i.e. use a
+comma-separated list of groups from metadata.groups attribute, you would use
+`--groups=metadata.groups`.
 
 ### Generating /etc/hosts entries
 
