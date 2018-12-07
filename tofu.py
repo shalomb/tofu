@@ -122,10 +122,11 @@ class TerraformInventory(object):
       print("%s\t%s" % x)
 
 
-  def ansible_inventory(self, group_by, use_access_ip):
+  def ansible_inventory(self, group_by, use_access_ip, groups=None):
     self.inventory = self.terraform_inventory(
                         group_by=group_by,
-                        use_access_ip=use_access_ip
+                        use_access_ip=use_access_ip,
+                        groups=groups,
                    )
     return self.inventory
 
@@ -233,7 +234,7 @@ class TerraformInventory(object):
     return result
 
 
-  def terraform_inventory(self, group_by, use_access_ip=True):
+  def terraform_inventory(self, group_by, use_access_ip=True, groups=None):
     result = Dotable.parse({
       '_meta': {
         'hostvars': {}
@@ -345,18 +346,35 @@ class TerraformInventory(object):
             self.get_instance(x).primary.attributes.name
               for x in group['vars']['nodes']
           ]
-      elif not group_by:
+      elif not group_by and not groups:
         group_by = 'name'
 
       if group_by:
         groupkey = attributes[group_by]
         if groupkey not in result:
-          group = result[groupkey] = groups_node
+          result[groupkey] = groups_node
+        group = result[groupkey]
         group.hosts.append(key)
         group.vars.update({
           'scale': len(group.hosts)
         })
         result[groupkey].vars.nodes.append(instance_id)
+
+      if groups and groups in attributes:
+        for groupkey in attributes[groups].split(','):
+          if groupkey not in result:
+            result[groupkey] = Dotable.parse({
+                'hosts': [],
+                'vars': {
+                  'nodes': []
+                 }
+              })
+          group = result[groupkey]
+          group.hosts.append(key)
+          group.vars.update({
+            'scale': len(group.hosts)
+          })
+          result[groupkey].vars.nodes.append(instance_id)
 
     return result
 
@@ -433,6 +451,9 @@ def cli_args():
   parser.add_argument('--groupby', action='store',
       help='Instance attribute to group hosts by (default=name)')
 
+  parser.add_argument('--groups', action='store', default='',
+      help='Instance attribute with comma-separated list of groups (default=none)')
+
   parser.add_argument('--list',   action = 'store_true',
       help='Output entire inventory (default, implied)')
 
@@ -489,12 +510,17 @@ if __name__ == "__main__":
                 'TF_GROUPBY' in os.environ else
                 args.groupby )
 
+    groups = ( os.environ['TF_GROUPS'] if
+                'TF_GROUPS' in os.environ else
+                args.groups )
+
     if args.json or 'TF_JSON' in os.environ:
       print(
         json.dumps(
           Inventory.ansible_inventory(
             group_by=group_by,
-            use_access_ip=use_access_ip
+            use_access_ip=use_access_ip,
+            groups=groups,
           ),
           indent=2,
           sort_keys=True
@@ -507,7 +533,8 @@ if __name__ == "__main__":
             json.dumps(
               Inventory.ansible_inventory(
                 group_by=group_by,
-                use_access_ip=use_access_ip
+                use_access_ip=use_access_ip,
+                groups=groups,
               ),
               sort_keys=True
             )
