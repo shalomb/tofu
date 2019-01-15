@@ -43,3 +43,10 @@ Thumbs.db
 *.svn
 *.sw*
 *.tmp*
+
+
+# Setuptools
+build/
+dist/
+tofu/
+tofu.egg-info/
