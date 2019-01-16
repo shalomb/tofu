@@ -59,9 +59,13 @@ class Dotable(dict):
     else:
       return v
 
-
-
 class TerraformInventory(object):
+
+  class TerraformException(Exception):
+    pass
+
+  class TerraformStateException(Exception):
+    pass
 
   def get_resources(self, type='openstack_compute_instance_v2'):
     return filter( lambda x : re.search(type, x), self.resources.keys() )
@@ -85,7 +89,7 @@ class TerraformInventory(object):
         out = subprocess.check_output(['terraform', 'state', 'pull'])
         if not out or not len(out):
           warn('terraform returned empty state (no state).')
-          raise Exception('''
+          raise self.TerraformStateException('''
             Ensure terraform state is accessible: `terraform state pull`
             Ensure terraform configuration is consistent: `terraform validate`
             Ensure terraform can list state: `terraform state list`, `terraform show`
@@ -97,10 +101,11 @@ class TerraformInventory(object):
         self.data = json.loads(out)
       except OSError as e:
         if e.errno == os.errno.ENOENT:
-          warn("terraform does not appear to be installed: %s" % str(e))
-          raise
+          err = "terraform does not appear to be installed: %s" % str(e)
+          warn(err)
+          raise self.TerraformException(err)
         else:
-          raise
+          raise self.TerraformException(e)
 
     self.data = Dotable.parse( self.data )
     self.resources = Dotable.parse( self.data.modules[0].resources )
@@ -211,7 +216,7 @@ class TerraformInventory(object):
         resources = self.get_resources(type=value)
 
         if not resources or not len(resources):
-          raise Exception('''
+          raise self.TerraformStateException('''
             No '%s' resources found or collection empty.
             Does `terraform state list | grep %s` list anything?
           ''' % (key, value))
@@ -228,6 +233,10 @@ class TerraformInventory(object):
         }
 
       except Exception as e:
+        # TODO
+        # Reraising an exception here is likely desirable as we should fail if
+        # the inventory requires resources we cannot find in terraform's state
+        # but we would break backwards compatibility.
         warn('WARNING: Error collecting %s inventory (%s): %s' % (key, value, e))
         result[key] = {}
 
