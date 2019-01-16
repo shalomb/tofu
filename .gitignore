@@ -50,3 +50,4 @@ build/
 dist/
 tofu/
 tofu.egg-info/
+tofu_openstack.egg-info/
