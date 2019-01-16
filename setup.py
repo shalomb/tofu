@@ -12,4 +12,4 @@ setup(name='tofu',
       packages=['tofu'],
       zip_safe=False,
       scripts=['tofu/tofu.py']
-      )
+    )
