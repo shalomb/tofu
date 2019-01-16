@@ -1,0 +1,43 @@
+---
+
+image: gitlab.tools.in.pan-net.eu:4567/docker-images/docker-cicd-deployer
+
+stages:
+  - build
+  - deploy
+
+variables:
+  package: tofu
+
+before_script:
+  - env | sort | egrep -i 'CI|GIT'
+  - python -m pip install --upgrade setuptools wheel twine
+  - awk -F"'" '
+      /version/ { $0=$1"'"'"$CI_COMMIT_REF_NAME"'"'"$3 }{ print $0 }
+    ' setup.py > setup.py.tmp; mv -v setup.py.tmp setup.py
+  - python setup.py sdist bdist_wheel
+  - find */ -type f -ls -a -exec sha256sum {} +
+
+'build-package':
+  stage: build
+  script:
+    - echo "Built $package@$CI_COMMIT_REF_NAME ... "
+  except:
+    - tags
+
+'deploy-package':
+  stage: deploy
+  environment:
+    name: tofu-package
+    url:  $af_repo_url
+  script:
+    - echo "Deploying $package@$CI_COMMIT_REF_NAME to $af_repo_url as $af_username ..."
+    - cat setup.py
+    - twine upload
+        --repository-url "$af_url"
+        --username       "$af_user"
+        --password       "$af_password"
+        dist/*
+  only:
+    - tags
+
