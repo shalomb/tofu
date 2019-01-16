@@ -1,5 +1,8 @@
 from setuptools import setup
 
+# pip install -e ./  # requires the following
+# pip install setuptools wheel
+
 setup(name='tofu',
       version='0.1',
       description="""A TerraForm OpenStack dynamic inventory
@@ -11,5 +14,8 @@ setup(name='tofu',
       license='Apache License 2.0',
       packages=['tofu'],
       zip_safe=False,
-      scripts=['tofu/tofu.py']
+      scripts=['tofu/tofu.py'],
+      install_requires=[
+        'pyyaml'
+      ],
     )
